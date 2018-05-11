@@ -1,7 +1,6 @@
 ---
 title: "project_randomforest"
 author: "Keerthana"
-date: "May 1, 2018"
 output: html_document
 ---
 ### This file implements Random Forest method and computes performance
