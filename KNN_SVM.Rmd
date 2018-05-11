@@ -5,7 +5,7 @@ output:
   html_document: default
 ---
 
-### This file reproduces the reuslts from the reference paper. It appiles KNN and SVM classifier and does LOSO and s-LOO cross validation.
+### This file reproduces the results from the reference paper. It appiles KNN and SVM classifier and does LOSO and s-LOO cross validation.
 
 ```{r}
 library(caret)
