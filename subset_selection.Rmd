@@ -1,7 +1,6 @@
 ---
 title: "mytry"
 author: "Keerthana"
-date: "May 8, 2018"
 output: html_document
 ---
 ### This file does best subset selection from the 26 input features
