@@ -1,7 +1,6 @@
 ---
 title: "project_graphs"
 author: "Keerthana"
-date: "April 30, 2018"
 output: html_document
 ---
 ### This file shows applies SVM classification for the data by considering different number of voice samples from each individual 
