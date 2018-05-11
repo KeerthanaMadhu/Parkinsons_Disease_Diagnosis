@@ -1,0 +1,45 @@
+---
+title: "mytry"
+author: "Keerthana"
+date: "May 8, 2018"
+output: html_document
+---
+### This file does best subset selection from the 26 input features
+```{r}
+library(caret)
+library(class)
+library(ISLR)
+# loading training data
+data_train <- read.table("train_data.txt",sep=",",row.names=NULL,col.names=c("subject id", "jitter1","jitter2","jitter3","jitter4","jitter5","shimmer1","shimmer2","shimmer3","shimmer4","shimmer5","shimmer6","AC","NTH","HTN","median pitch","mean pitch","sd","min pitch","max pitch","num pulses","Number of periods","Mean period","Standard deviation of period","Fraction of locally unvoiced frames","Number of voice breaks","Degree of voice breaks","UPDRS","class"),fill=FALSE)
+train_data=data_train[,1:27]
+train_response=data_train[,29]
+
+# loading test data
+data_test <- read.table("test_data.txt",sep=",",row.names=NULL,col.names=c("subject id", "jitter1","jitter2","jitter3","jitter4","jitter5","shimmer1","shimmer2","shimmer3","shimmer4","shimmer5","shimmer6","AC","NTH","HTN","median pitch","mean pitch","sd","min pitch","max pitch","num pulses","Number of periods","Mean period","Standard deviation of period","Fraction of locally unvoiced frames","Number of voice breaks","Degree of voice breaks","class"),fill=FALSE)
+test_data=data_test[,1:27]
+test_response=data_test[,28]
+
+```
+
+
+```{r}
+
+train_data_norm=train_data[,2:27]
+test_data_norm=test_data[,2:27]
+data=rbind(train_data_norm,test_data_norm)
+response=c(train_response,test_response)
+```
+
+
+```{r}
+# subset selection
+library(leaps)
+data1<-data.frame(y=response,x=data)
+model1 <- regsubsets(y ~ ., data = data1, nvmax = 26)
+model1_summary<-summary(model1)
+which.min(model1_summary$cp)
+which.min(model1_summary$bic)
+which.max(model1_summary$adjr2)
+summary(model1)
+```
+
