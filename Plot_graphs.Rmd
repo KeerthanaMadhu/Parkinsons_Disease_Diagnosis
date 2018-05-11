@@ -168,14 +168,14 @@ legend(20,0.75,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
 
 ```{r,echo=FALSE}
 
-plot(sensi_sLOO[2:26],type='b',col='blue',xlab="number of voice samples",ylab="Sensitivity",ylim=c(0.4,1))
+plot(sensi_sLOO,type='b',col='blue',xlab="number of voice samples",ylab="Sensitivity",ylim=c(0.4,1))
 points(sensi,type='b',col='red')
 legend(20,0.98,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
 ```
 
 ```{r,echo=FALSE}
 
-plot(speci_sLOO[2:26],type='b',col='blue',xlab="number of voice samples",ylab="Specitivity",ylim=c(0.4,1))
+plot(speci_sLOO,type='b',col='blue',xlab="number of voice samples",ylab="Specitivity",ylim=c(0.4,1))
 points(speci,type='b',col='red')
 legend(20,0.98,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
 ```
