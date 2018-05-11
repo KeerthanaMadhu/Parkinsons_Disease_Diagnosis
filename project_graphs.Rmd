@@ -1,0 +1,182 @@
+---
+title: "project_graphs"
+author: "Keerthana"
+date: "April 30, 2018"
+output: html_document
+---
+### This file shows applies SVM classification for the data by considering different number of voice samples from each individual 
+
+```{r}
+library(caret)
+library(class)
+library(ISLR)
+# loading training data
+data_train <- read.table("train_data.txt",sep=",",row.names=NULL,col.names=c("subject id", "jitter1","jitter2","jitter3","jitter4","jitter5","shimmer1","shimmer2","shimmer3","shimmer4","shimmer5","shimmer6","AC","NTH","HTN","median pitch","mean pitch","sd","min pitch","max pitch","num pulses","Number of periods","Mean period","Standard deviation of period","Fraction of locally unvoiced frames","Number of voice breaks","Degree of voice breaks","UPDRS","class"),fill=FALSE)
+train_data=data_train[,1:27]
+train_response=data_train[,29]
+
+# loading test data
+data_test <- read.table("test_data.txt",sep=",",row.names=NULL,col.names=c("subject id", "jitter1","jitter2","jitter3","jitter4","jitter5","shimmer1","shimmer2","shimmer3","shimmer4","shimmer5","shimmer6","AC","NTH","HTN","median pitch","mean pitch","sd","min pitch","max pitch","num pulses","Number of periods","Mean period","Standard deviation of period","Fraction of locally unvoiced frames","Number of voice breaks","Degree of voice breaks","class"),fill=FALSE)
+test_data=data_test[,1:27]
+test_response=data_test[,28]
+
+```
+
+
+```{r}
+# standardise the data
+train_data_norm=scale(train_data[,2:27])
+
+test_data_norm=scale(test_data[,2:27])
+
+```
+
+```{r}
+# CV LOSO SVM
+library(e1071)
+
+# matrices for Accuracy, MCC, Sensitvity and Specificity
+acc=matrix(0,26,1)
+MCC=matrix(0,26,1)
+sensi=matrix(0,26,1)
+speci=matrix(0,26,1)
+for (k in 1:26){
+training_data=matrix(NA,1,26)
+
+# choosing k voice samples from each individual
+for (s in 0:39){
+training_data=rbind(training_data,train_data_norm[(s*26+1):(s*26+k),])
+}
+training_data=training_data[-1,]
+training_data=scale(training_data[,1:26])
+response_data=matrix(0,k*40,1)
+response_data[1:(k*20)]=1
+TN=matrix(0,40,1)
+TP=matrix(0,40,1)
+FN=matrix(0,40,1)
+FP=matrix(0,40,1)
+for (i in 0:39) {
+train_data_frame=data.frame(x=training_data[-((i*k+1):(i*k+k)),],y=response_data[-((i*k+1):(i*k+k))])
+ svm_model<-svm(y ~ ., data = train_data_frame, type= "C-classification",kernel="linear")
+ if(k==1){
+test_data_frame=data.frame(x=t(training_data[((i*k+1):(i*k+k)),]),y=t(response_data[((i*k+1):(i*k+k))]))
+ }
+ else{
+   test_data_frame=data.frame(x=training_data[((i*k+1):(i*k+k)),],y=response_data[((i*k+1):(i*k+k))])}
+ pred<-predict(svm_model,test_data_frame)
+
+test_truth=response_data[((i*k+1):(i*k+k))]
+for (j in 1:k)
+  if(pred[j]==test_truth[j])
+  {
+    if(pred[j]==0)
+      TN[i+1]=TN[i+1]+1
+    else
+      TP[i+1]=TP[i+1]+1
+  }
+  else
+  {
+    if(pred[j]==0)
+      FN[i+1]=FN[i+1]+1
+    else
+      FP[i+1]=FP[i+1]+1
+  }
+}
+FN=sum(FN)
+TN=sum(TN)
+FP=sum(FP)
+TP=sum(TP)
+acc[k]=(TP+TN)/(k*40)
+MCC[k]=(TP*TN-FP*FN)/sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+sensi[k]=TP/(TP+FN)
+speci[k]=TN/(TN+FP)
+
+}
+
+```
+
+```{r}
+#  Summmarising the dataset using mean and standard deviation 
+
+train_mat1=matrix(0,40,52)
+train_response_mat=matrix(0,40,1)
+acc_sLOO=matrix(0,26,1)
+MCC_sLOO=matrix(0,26,1)
+sensi_sLOO=matrix(0,26,1)
+speci_sLOO=matrix(0,26,1)
+for (k in 2:26){
+TN=0
+TP=0
+FN=0
+FP=0
+for (i in 0:39){
+for (j in 1:26){
+l=i*26+1
+m=i*26+k
+train_mat1[i+1,j]=mean(train_data_norm[l:m,j])
+train_mat1[i+1,j+26]=sd(train_data_norm[l:m,j])
+
+
+}
+train_response_mat[i+1]=train_response[i*26+1]
+}
+
+# apply SVM classification s-LOO
+ for (i in 1:40) {
+train_mat1_frame=data.frame(x=train_mat1[-i,],y=train_response_mat[-i]) 
+svm_Linear<-svm(y ~ ., data = train_mat1_frame, type="C-classification",kernel="linear")
+test_val=data.frame(x=t(train_mat1[i,]),y=t(train_response_mat[i]))
+pred<-predict(svm_Linear,test_val)
+
+if(test_val$y==pred)
+  {
+    if(pred==0)
+      TN=TN+1
+    else
+      TP=TP+1
+  }
+  else
+  {
+    if(pred==0)
+      FN=FN+1
+    else
+      FP=FP+1
+  }
+ }
+# store performance metrics 
+acc_sLOO[k]=(TP+TN)/40
+MCC_sLOO[k]=(TP*TN-FP*FN)/sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+sensi_sLOO[k]=TP/(TP+FN)
+speci_sLOO[k]=TN/(TN+FP)
+}
+```
+
+### Plots of Accuracy, MCC, Sensitivity and Specificty
+
+
+```{r,echo=FALSE}
+accuracy=acc_sLOO
+plot(accuracy,type='b',col='blue',xlab="number of voice samples",ylim=c(0.4,1))
+points(acc,type='b',col='red')
+legend(20,0.95,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
+```
+```{r,echo=FALSE}
+
+plot(MCC_sLOO,type='b',col='blue',xlab="number of voice samples",ylab="MCC",ylim=c(0,0.8))
+points(MCC,type='b',col='red')
+legend(20,0.75,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
+```
+
+```{r,echo=FALSE}
+
+plot(sensi_sLOO[2:26],type='b',col='blue',xlab="number of voice samples",ylab="Sensitivity",ylim=c(0.4,1))
+points(sensi,type='b',col='red')
+legend(20,0.98,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
+```
+
+```{r,echo=FALSE}
+
+plot(speci_sLOO[2:26],type='b',col='blue',xlab="number of voice samples",ylab="Specitivity",ylim=c(0.4,1))
+points(speci,type='b',col='red')
+legend(20,0.98,legend=c('s-LOO','LOSO'),col=c("blue","red"),lty=1:2, cex=0.8)
+```
